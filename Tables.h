@@ -19,10 +19,8 @@ enum TokenType
 
 enum IdentificatorType
 {
-   CONST,
    VARIABLE,
    FUNCTION
-
 };
 enum ValueType
 {
@@ -32,14 +30,20 @@ enum ValueType
    CHAR,
 };
 
-struct Lexeme
+struct LexemeAttributes
 {
-   TokenType table;
-   size_t i;
    ValueType type;
    void *value;
-   Lexeme(TokenType table, size_t i, ValueType type = NONE, void *value = nullptr) : table(table), i(i),type(type),value(value) {};
+   LexemeAttributes(size_t i, ValueType type = NONE, void *value = nullptr) :type(type),value(value) {};
 };
+
+struct Lexeme
+{
+   TokenType type;
+   size_t i;
+   Lexeme(TokenType type, size_t i) : type(type), i(i) {};
+};
+
 
 class StaticTable
 {
@@ -85,17 +89,21 @@ public:
    }
 };
 
+
+
 class DynamicTable
 {
    std::unordered_map<std::string, size_t> identificators;
    std::vector<std::string> IList;
+   std::vector<LexemeAttributes> attributes;
 public:
    DynamicTable() = default;
-   size_t add(std::string &lex)
+   size_t add(std::string &strlex, LexemeAttributes lexema)
    {
       size_t i = IList.size();
-      IList.push_back(lex);
-      identificators[lex] = i;
+      IList.push_back(strlex);
+      attributes.push_back(lexema);
+      identificators[strlex] = i;
       return i;
    }
    auto find(std::string &lex)
