@@ -17,11 +17,28 @@ enum TokenType
    SEPARATOR
 };
 
+enum IdentificatorType
+{
+   CONST,
+   VARIABLE,
+   FUNCTION
+
+};
+enum ValueType
+{
+   NONE,
+   INT,
+   FLOAT,
+   CHAR,
+};
+
 struct Lexeme
 {
-   TokenType type;
+   TokenType table;
    size_t i;
-   Lexeme(TokenType type, size_t i) : type(type), i(i) {};
+   ValueType type;
+   void *value;
+   Lexeme(TokenType table, size_t i, ValueType type = NONE, void *value = nullptr) : table(table), i(i),type(type),value(value) {};
 };
 
 class StaticTable
