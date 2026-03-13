@@ -17,6 +17,13 @@ enum TokenType
    SEPARATOR
 };
 
+struct functionValue
+{
+   ValueType value;
+   std::vector<ValueType> args;
+
+};
+
 enum IdentificatorType
 {
    VARIABLE,
@@ -32,9 +39,15 @@ enum ValueType
 
 struct LexemeAttributes
 {
-   ValueType type;
    void *value;
-   LexemeAttributes(size_t i, ValueType type = NONE, void *value = nullptr) :type(type),value(value) {};
+   LexemeAttributes( void *value = nullptr) : value(value) {};
+   ~LexemeAttributes()
+   {
+      if(value != nullptr)
+      {
+         delete value;
+      }
+   }
 };
 
 struct Lexeme
@@ -56,19 +69,19 @@ public:
       lexems = std::move(_lexemes);
       std::sort(lexems.begin(), lexems.end());
    }
-   size_t find(const std::string &lexeme)
+   size_t find(const std::string &lex)
    {
       size_t left = 0;
-      size_t right = lexeme.size() - 1;
+      size_t right = lex.size() - 1;
       while(left <= right)
       {
          size_t cur = (left + right) / 2;
-         if(lexems[cur] == lexeme)
+         if(lexems[cur] == lex)
          {
             return cur;
          }
       
-         if(lexems[cur] < lexeme)
+         if(lexems[cur] < lex)
          {
             left = cur + 1;
          }
@@ -82,6 +95,14 @@ public:
    size_t size()
    {
       return lexems.size();
+   }
+   std::string getVal(size_t i)
+   {
+      return lexems[i];
+   }
+   bool contains(const std::string &lex)
+   {
+      find(lex) == lexems.size() ? false : true;
    }
 };
 
@@ -102,9 +123,20 @@ public:
       identificators[strlex] = i;
       return i;
    }
-   auto find(std::string &lex)
+   auto find(const std::string &lex)
    {
-      return identificators.find(lex);
+      return (*identificators.find(lex)).second;
    }
-
+   std::string getVal(size_t i)
+   {
+      return IList[i];
+   }
+   LexemeAttributes getAttributes(size_t i)
+   {
+      return attributes[i];
+   }
+   bool contains(const std::string &lex)
+   {
+      find(lex) == identificators.size() ? false : true;
+   }
 };
