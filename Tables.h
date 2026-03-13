@@ -79,13 +79,9 @@ public:
       }
       return lexems.size();
    }
-   bool contains(const std::string &lexeme)
+   size_t size()
    {
-      if(find(lexeme) == lexems.size())
-      {
-         return false;
-      }
-      return true;
+      return lexems.size();
    }
 };
 

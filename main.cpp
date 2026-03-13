@@ -4,6 +4,57 @@
 #include <fstream>
 int main()
 {
+
+   std::string testFolder = "test1/";
+   StaticTable keywords;
+   {
+      std::ifstream stream(testFolder + "Keywords.txt");
+      std::string buff = "";
+      std::vector<std::string> bArr;
+      while (std::getline(stream, buff))
+      {
+         bArr.push_back(buff);
+      }
+      keywords.load(std::move(bArr));
+   }
+   StaticTable operators;
+   {
+      std::ifstream stream(testFolder + "Operators.txt");
+      std::string buff = "";
+      std::vector<std::string> bArr;
+      while (std::getline(stream, buff))
+      {
+         bArr.push_back(buff);
+      }
+      operators.load(std::move(bArr));
+   }
+   StaticTable separators;
+   {
+      std::ifstream stream(testFolder + "Separators.txt");
+      std::string buff = "";
+      std::vector<std::string> bArr;
+      while (std::getline(stream, buff))
+      {
+         bArr.push_back(buff);
+      }
+      separators.load(std::move(bArr));
+   }
+
+   DynamicTable constants;
+   DynamicTable identificators;
+   std::string var = "x";
+   identificators.add(var, new LexemeAttributes());
+
+
+
+
+
+   return 0;
+}
+
+
+void test1()
+{
    std::string testFolder = "test1/";
    StaticTable keywords;
    {
@@ -44,15 +95,31 @@ int main()
    {
       std::ifstream stream(testFolder + "Program.txt");
       std::string buff = "";
-      int lspace = 0,rspace = 0;
+      int lspace = 0, rspace = 0;
       while (std::getline(stream, buff))
       {
          rspace = buff.find(" ", lspace);
          while (lspace != -1)
          {
             std::string substr = buff.substr(lspace, rspace == -1 ? buff.size() : rspace);
-            
 
+            switch (0)
+            {
+               case 0:
+               {
+                  size_t i = keywords.find(substr);
+                  if (i != keywords.size())
+                  {
+                  }
+               }
+               case 1:
+               {
+
+
+               }
+
+
+            }
 
             lspace = rspace;
             rspace = buff.find(" ", lspace);
@@ -63,8 +130,4 @@ int main()
    }
 
 
-
-
-   return 0;
 }
-
