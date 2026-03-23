@@ -5,7 +5,31 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
-enum TokenType
+
+enum class  ExpandedToken
+{
+   FUNDAMENTALS, // for,if, etc..
+   TYPE, // int, void, etc...
+   BINARY, // + - etc...
+   UNARY, // ++ -- etc...
+   COMMA,        // ,
+   SEMICOLON,    // ;
+
+   OPEN_PAREN,   // (
+   CLOSE_PAREN,  // )
+
+   OPEN_BRACE,   // {
+   CLOSE_BRACE,  // }
+
+   OPEN_BRACKET, // [
+   CLOSE_BRACKET, // ]
+   IDENTIFIER_EX,
+   IDENTIFIER_UNEX,
+   CONSTANT,
+   UNEXPECTED
+};
+
+enum class  TokenType
 {
     //dynamic
     IDENTIFIER,
@@ -14,21 +38,26 @@ enum TokenType
     //static
     KEYWORD,
     OPERATOR,
-    SEPARATOR
+    SEPARATOR,
+
+    //default
+    DEFAULT
 };
 
-enum IdentificatorType
+
+
+enum class  IdentificatorType
 {
     VARIABLE,
     FUNCTION
 };
-enum ValueType
+enum class  ValueType
 {
-    NONE,
+    VOID,
     INT,
-    FLOAT,
-    CHAR,
 };
+
+
 
 struct functionValue
 {
@@ -60,13 +89,30 @@ struct Lexeme
 };
 
 
+struct Fundamentals
+{
+   std::string lexeme;
+   ExpandedToken type;
+   TokenType tokenType;
+   Fundamentals(std::string &lexeme, TokenType token, ExpandedToken type) : lexeme(lexeme), type(type), tokenType(token) {};
+
+   bool operator >(Fundamentals &a)
+   {
+      return lexeme > a.lexeme;
+   }
+   bool operator <(Fundamentals &a)
+   {
+      return lexeme < a.lexeme;
+   }
+};
+
 class StaticTable
 {
-    std::vector<std::string> lexems;
+    std::vector<Fundamentals> lexems;
 public:
 
     StaticTable() = default;
-    void load(std::vector<std::string>&& _lexemes)
+    void load(std::vector<Fundamentals>&& _lexemes)
     {
         lexems = std::move(_lexemes);
         std::sort(lexems.begin(), lexems.end());
@@ -74,16 +120,16 @@ public:
     size_t find(const std::string& lex)
     {
         size_t left = 0;
-        size_t right = lex.size() - 1;
+        size_t right = lexems.size() - 1;
         while (left <= right)
         {
             size_t cur = (left + right) / 2;
-            if (lexems[cur] == lex)
+            if (lexems[cur].lexeme == lex)
             {
                 return cur;
             }
 
-            if (lexems[cur] < lex)
+            if (lexems[cur].lexeme < lex)
             {
                 left = cur + 1;
             }
@@ -100,17 +146,21 @@ public:
     }
     std::string getVal(size_t i)
     {
-        return lexems[i];
+        return lexems[i].lexeme;
+    }
+    Fundamentals getRaw(size_t i)
+    {
+       return lexems[i];
     }
     bool contains(const std::string& lex)
     {
-        find(lex) == lexems.size() ? false : true;
+        return find(lex) == lexems.size() ? false : true;
     }
     void drawTable()
     {
         for(size_t i = 0; i < lexems.size();i++)
         {
-            std::cout << i << "  " << lexems[i] << std::endl;
+            std::cout << i << "  " << lexems[i].lexeme << std::endl;
         }
     
     }
@@ -121,16 +171,16 @@ public:
 class DynamicTable
 {
     std::unordered_map<std::string, size_t> identificators;
-    std::vector<std::string> IList;
+    std::vector<Fundamentals> IList;
     std::vector<LexemeAttributes*> attributes;
 public:
     DynamicTable() = default;
-    size_t add(std::string& strlex, LexemeAttributes *lexema)
+    size_t add(std::string& strlex,TokenType token, ExpandedToken type, LexemeAttributes *lexema = nullptr)
     {
         if (identificators.find(strlex) == identificators.end())
         {
             size_t i = IList.size();
-            IList.push_back(strlex);
+            IList.emplace_back(strlex,token,type);
             attributes.push_back(lexema);
             identificators[strlex] = i;
             return i;
@@ -143,7 +193,11 @@ public:
     }
     std::string getVal(size_t i)
     {
-        return IList[i];
+        return IList[i].lexeme;
+    }
+    Fundamentals getRaw(size_t i)
+    {
+       return IList[i];
     }
     int getAttributes( size_t i )
     {
@@ -156,5 +210,9 @@ public:
     size_t size()
     {
         return IList.size();
+    }
+    void setAttribute(size_t n,LexemeAttributes *lexema)
+    {
+      
     }
 };

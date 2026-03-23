@@ -1,7 +1,7 @@
-int
-void
-return
-switch
-case
-break
-default
+int TYPE
+void TYPE
+return FUNDAMENTALS
+switch FUNDAMENTALS
+case FUNDAMENTALS
+break FUNDAMENTALS
+default FUNDAMENTALS
