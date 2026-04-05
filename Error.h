@@ -1,3 +1,4 @@
+//Error.h
 #pragma once
 #include <set>
 #include <vector>
@@ -17,8 +18,6 @@ struct LocalExpectation
 		(expected.insert(args), ...);
 	}
 };
-
-
 
 class Error
 {

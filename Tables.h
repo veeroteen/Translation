@@ -1,3 +1,4 @@
+//Table.h
 #pragma once
 #include <set>
 #include <vector>
@@ -33,8 +34,6 @@ enum class  TokenType
     UNEXPECTED
 };
 
-
-
 enum class  IdentificatorType
 {
     VARIABLE,
@@ -45,8 +44,6 @@ enum class  ValueType
     VOID,
     INT,
 };
-
-
 
 struct functionValue
 {
@@ -70,9 +67,6 @@ struct LexemeAttributes
    }
 };
 
-
-
-
 struct Lexeme
 {
    std::string lexeme;
@@ -95,8 +89,6 @@ struct LexemeI
    size_t i;
    LexemeI(ExpandedToken type, size_t i) : type(type), i(i) {};
 };
-
-
 
 class StaticTable
 {
@@ -161,8 +153,6 @@ public:
        return lexems;
     }
 };
-
-
 
 class DynamicTable
 {

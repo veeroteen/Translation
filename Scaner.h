@@ -1,3 +1,4 @@
+//Scaner.h
 #pragma once
 #include "Tables.h"
 #include <fstream>
@@ -95,7 +96,7 @@ class Scanner
          size_t i = constants.find(word);
          if (i == constants.size())
          {
-            i = constants.add(word, ExpandedToken::IDENTIFIER);
+            i = constants.add(word, ExpandedToken::CONSTANT);
          }
          lexemes.emplace_back(constants.getRaw(i).type,i);
          return 0;
@@ -103,27 +104,60 @@ class Scanner
       return 1;
 
    }
-
    void lexscan(std::string &codePath)
    {
       std::ifstream code(codePath);
       size_t strn = 1;
+      bool comstate = false;
       while (!code.eof())
       {
+         /**/
          std::string str = "";
          std::getline(code, str);
+         if(comstate)
+         {
+            
+            auto commend = str.find("*/");
+            if (commend != std::string::npos)
+            {
+               str.erase(str.begin(), str.begin()+commend+2);
+               comstate = false;
+            }
+            else
+            {
+               str.erase(str.begin(), str.end());
+            
+            }
+         }
+         
+         auto comm = str.find("/*");
+         if (comm != std::string::npos)
+         {
+
+            auto commend = str.find("*/");
+            if (commend != std::string::npos)
+            {
+               str.erase(str.begin() + comm, str.begin() + commend);
+            }
+            else
+            {
+               str.erase(str.begin() + comm, str.end());
+               comstate = true;
+            }
+         }
          trim(str);
          auto start = str.begin();
 
-         while (start!= str.end())
+
+
+         while (start != str.end())
          {
             auto separ = findSep(start, str.end(), stringSep);
             std::string word = std::string(start, separ);
             int err = addLexeme(word);
-            if(err != 0 && *separ == ' ')
+            if (err != 0 && (separ == str.end() ? true : (*separ == ' ')))
             {
-               makeError(strn, word + "  user-defined literal not found or unappropriate");
-            
+               makeError(strn, word + " user-defined literal not found or unappropriate");
             }
             if(*separ != ' ')
             {

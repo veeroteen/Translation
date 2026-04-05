@@ -1,10 +1,10 @@
+//Helpers.h
 #pragma once
 #include "Error.h"
 #include <string>
 #include <algorithm>
 #include <cctype>
 #include "Tables.h"
-
 
 TokenType EtoT(ExpandedToken et)
 {
@@ -34,7 +34,6 @@ TokenType EtoT(ExpandedToken et)
 	}
 
 }
-
 
 std::string expandedTokenToString(ExpandedToken t)
 {
