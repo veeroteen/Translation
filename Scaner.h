@@ -13,65 +13,98 @@ class Scanner
    StaticTable separators;
    DynamicTable constants;
    DynamicTable identificators;
-   std::vector<Lexeme> lexemes;
-   std::set<char> forbiddenIName;
+   std::vector<LexemeI> lexemes;
+   std::set<char> stringSep;
 
-   Fundamentals findInTable(std::string &word, LocalExpectation expec)
+   std::string getLexemeStr(LexemeI &lex)
    {
-      for(auto &a : expec.expected)
+      TokenType table = EtoT(lex.type);
+      switch(table)
       {
-         if (isKeyword(a))
+         case TokenType::KEYWORD:
          {
-            size_t i = keywords.find(word);
-            if (i != keywords.size())
-            {
-               return keywords.getRaw(i);
-            }
+            return keywords.getVal(lex.i);
+            break;
          }
-         else if (isOperator(a))
+         case TokenType::OPERATOR:
          {
-            size_t i = operators.find(word);
-            if (i != operators.size())
-            {
-               return operators.getRaw(i);
-            }
+            return operators.getVal(lex.i);
+            break;
          }
-         else if (isSeparator(a))
+         case TokenType::SEPARATOR:
          {
-            size_t i = separators.find(word);
-            if (i != separators.size())
-            {
-               return separators.getRaw(i);
-            }
+            return separators.getVal(lex.i);
+            break;
          }
-         else if (isIdentifier(a))
+         case TokenType::IDENTIFIER:
          {
-            size_t i = separators.find(word);
-            if (i != separators.size())
-            {
-               return separators.getRaw(i);
-            }
+            return identificators.getVal(lex.i);
+            break;
          }
-         else if (isConstant(a))
+         case TokenType::CONSTANT:
          {
-            size_t i = separators.find(word);
-            if (i != separators.size())
-            {
-               return separators.getRaw(i);
-            }
+            return constants.getVal(lex.i);
+            break;
          }
       }
-      std::string buff = "";
-      return Fundamentals(buff, TokenType::DEFAULT, ExpandedToken::UNEXPECTED);
-   
-   
    }
+
    void makeError(size_t strn, LocalExpectation &localExpectation)
    {
       std::string error = "line: " + std::to_string(strn) + ", expected: " + to_string(localExpectation);
       Error::errors.push_back(error);
    }
-   void scan(std::string &codePath)
+   void makeError(size_t strn, std::string str)
+   {
+      std::string error = "line: " + std::to_string(strn) + ", " + str;
+      Error::errors.push_back(error);
+   }
+   int addLexeme(std::string &word)
+   {
+      size_t i = keywords.find(word);
+      if(i != keywords.size())
+      {
+         lexemes.emplace_back(keywords.getRaw(i).type,i);
+         return 0;
+      }
+      i = operators.find(word);
+      if (i != operators.size())
+      {
+         lexemes.emplace_back(operators.getRaw(i).type,i);
+         return 0;
+      }
+      i = separators.find(word);
+      if (i != separators.size())
+      {
+         lexemes.emplace_back(separators.getRaw(i).type,i);
+         return 0;
+      }
+   
+      if (isIdentifier(word))
+      {
+         size_t i = identificators.find(word);
+         if (i == identificators.size())
+         {
+            i = identificators.add(word, ExpandedToken::IDENTIFIER);
+         }
+         lexemes.emplace_back(identificators.getRaw(i).type,i);
+         return 0;
+      }
+      if (isInteger(word))
+      {
+         size_t i = constants.find(word);
+         if (i == constants.size())
+         {
+            i = constants.add(word, ExpandedToken::IDENTIFIER);
+         }
+         lexemes.emplace_back(constants.getRaw(i).type,i);
+         return 0;
+      }
+      return 1;
+
+   }
+
+   void lexscan(std::string &codePath)
    {
       std::ifstream code(codePath);
       size_t strn = 1;
@@ -81,83 +114,37 @@ class Scanner
          std::getline(code, str);
          trim(str);
          auto start = str.begin();
-         size_t level = 0;
-         LocalExpectation localExpectation(lexemes.size(), ExpandedToken::FUNDAMENTALS, ExpandedToken::TYPE);
+
          while (start!= str.end())
          {
-            auto separ = findSep(start, str.end(), forbiddenIName);
-
-            
-            std::string word = std::string(start, separ); // space ?
-            Fundamentals lex = findInTable(word,localExpectation);
-            
-            if(lex.type == ExpandedToken::UNEXPECTED)
+            auto separ = findSep(start, str.end(), stringSep);
+            std::string word = std::string(start, separ);
+            int err = addLexeme(word);
+            if(err != 0 && *separ == ' ')
             {
-               if(localExpectation.expected.contains(ExpandedToken::IDENTIFIER_UNEX))
-               { 
-                  if(isIdentifier(word))
-                  {
-                     if(localExpectation.expectator == ExpandedToken::TYPE)
-                     {
-                        
-                     }
-                  
-                  }
-               }
-               else if(localExpectation.expected.contains(ExpandedToken::CONSTANT))
-               {
-                  if (isInteger(word))
-                  {
-
-
-                  }
-               }
-               else
-               {
-                  makeError(strn, localExpectation);
-                  return;
-               }
-               continue;
+               makeError(strn, word + "  user-defined literal not found or unappropriate");
+            
             }
-            switch (lex.tokenType)
+            if(*separ != ' ')
             {
-               case TokenType::KEYWORD:
+               word = std::string(separ, separ+1);
+               err = addLexeme(word);
+               if (err != 0)
                {
-                  lexemes.emplace_back(lex.tokenType, keywords.find(word));
-                  switch (lex.type)
-                  {
-                     case ExpandedToken::FUNDAMENTALS:
-                     {
-                        break;
-                     }
-                     case ExpandedToken::TYPE:
-                     {
-                        localExpectation = LocalExpectation(lexemes.size() - 1, lex.type, ExpandedToken::IDENTIFIER_UNEX, ExpandedToken::OPEN_PAREN);
-                        break;
-                     }
-                  }
-                  break;
-               }
-               case TokenType::IDENTIFIER:
-               {
-                  break;
-               }
-               case TokenType::DEFAULT:
-               {
+                  makeError(strn, word + "  user-defined literal not found or unappropriate");
 
                }
             }
-
-            
             start = separ+1;
          }
+         strn += 1;
       }
    
    }
 
 
 public:
-	Scanner(std::string &testFolder)
+   Scanner(std::string &testFolder)
 	{
       testFolder += "/";
       
@@ -165,12 +152,12 @@ public:
       {
          std::ifstream stream(testFolder + "Keywords.txt");
          std::string buff = "";
-         std::vector<Fundamentals> bArr;
+         std::vector<Lexeme> bArr;
          while (std::getline(stream, buff))
          {
             std::pair<std::string, ExpandedToken> par;
             divide(par, buff);
-            bArr.emplace_back(par.first,  TokenType::KEYWORD, par.second);
+            bArr.emplace_back(par.first, par.second);
          }
          keywords.load(std::move(bArr));
       }
@@ -178,17 +165,13 @@ public:
       {
          std::ifstream stream(testFolder + "Operators.txt");
          std::string buff = "";
-         std::vector<Fundamentals> bArr;
+         std::vector<Lexeme> bArr;
          while (std::getline(stream, buff))
          {
             std::pair<std::string, ExpandedToken> par;
             divide(par, buff);
 
-            bArr.emplace_back(par.first, TokenType::OPERATOR, par.second);
-            for (auto &a : par.first)
-            {
-               forbiddenIName.insert(a);
-            }
+            bArr.emplace_back(par.first, par.second);
          }
          operators.load(std::move(bArr));
       }
@@ -196,23 +179,31 @@ public:
       {
          std::ifstream stream(testFolder + "Separators.txt");
          std::string buff = "";
-         std::vector<Fundamentals> bArr;
+         std::vector<Lexeme> bArr;
          while (std::getline(stream, buff))
          {
             std::pair<std::string, ExpandedToken> par;
             divide(par, buff);
-            bArr.emplace_back(par.first, TokenType::SEPARATOR, par.second);
+            bArr.emplace_back(par.first, par.second);
             for (auto &a : par.first)
             {
-               forbiddenIName.insert(a);
+               stringSep.insert(a);
             }
          }
          separators.load(std::move(bArr));
       }
-      forbiddenIName.insert(' ');
+      stringSep.insert(' ');
 
       std::string codePath(testFolder + "main.cpp");
-      scan(codePath);
+      lexscan(codePath);
+      std::ofstream out("lexemes.txt");
+      for(auto &a : lexemes)
+      {
+         out << getLexemeStr(a) << "  ( " << expandedTokenToString(a.type) << ", " << a.i << " );\n";
+      }
+      out.close();
+      out.open("errors.txt");
+      Error::printErrors(out);
 	}
 
 

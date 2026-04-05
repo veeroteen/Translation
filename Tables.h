@@ -12,19 +12,8 @@ enum class  ExpandedToken
    TYPE, // int, void, etc...
    BINARY, // + - etc...
    UNARY, // ++ -- etc...
-   COMMA,        // ,
-   SEMICOLON,    // ;
-
-   OPEN_PAREN,   // (
-   CLOSE_PAREN,  // )
-
-   OPEN_BRACE,   // {
-   CLOSE_BRACE,  // }
-
-   OPEN_BRACKET, // [
-   CLOSE_BRACKET, // ]
-   IDENTIFIER_EX,
-   IDENTIFIER_UNEX,
+   SEPARATOR,
+   IDENTIFIER,
    CONSTANT,
    UNEXPECTED
 };
@@ -40,8 +29,8 @@ enum class  TokenType
     OPERATOR,
     SEPARATOR,
 
-    //default
-    DEFAULT
+    //
+    UNEXPECTED
 };
 
 
@@ -81,38 +70,41 @@ struct LexemeAttributes
    }
 };
 
+
+
+
 struct Lexeme
-{
-    TokenType type;
-    size_t i;
-    Lexeme(TokenType type, size_t i) : type(type), i(i) {};
-};
-
-
-struct Fundamentals
 {
    std::string lexeme;
    ExpandedToken type;
-   TokenType tokenType;
-   Fundamentals(std::string &lexeme, TokenType token, ExpandedToken type) : lexeme(lexeme), type(type), tokenType(token) {};
+   Lexeme(std::string &lexeme, ExpandedToken type) : lexeme(lexeme), type(type) {};
 
-   bool operator >(Fundamentals &a)
+   bool operator >(Lexeme &a)
    {
       return lexeme > a.lexeme;
    }
-   bool operator <(Fundamentals &a)
+   bool operator <(Lexeme &a)
    {
       return lexeme < a.lexeme;
    }
 };
 
+struct LexemeI
+{
+   ExpandedToken type;
+   size_t i;
+   LexemeI(ExpandedToken type, size_t i) : type(type), i(i) {};
+};
+
+
+
 class StaticTable
 {
-    std::vector<Fundamentals> lexems;
+    std::vector<Lexeme> lexems;
 public:
 
     StaticTable() = default;
-    void load(std::vector<Fundamentals>&& _lexemes)
+    void load(std::vector<Lexeme>&& _lexemes)
     {
         lexems = std::move(_lexemes);
         std::sort(lexems.begin(), lexems.end());
@@ -121,7 +113,7 @@ public:
     {
         size_t left = 0;
         size_t right = lexems.size() - 1;
-        while (left <= right)
+        while (left <= right && right <  size())
         {
             size_t cur = (left + right) / 2;
             if (lexems[cur].lexeme == lex)
@@ -148,7 +140,7 @@ public:
     {
         return lexems[i].lexeme;
     }
-    Fundamentals getRaw(size_t i)
+    Lexeme getRaw(size_t i)
     {
        return lexems[i];
     }
@@ -164,6 +156,10 @@ public:
         }
     
     }
+    const std::vector<Lexeme>& getTable()
+    {
+       return lexems;
+    }
 };
 
 
@@ -171,16 +167,16 @@ public:
 class DynamicTable
 {
     std::unordered_map<std::string, size_t> identificators;
-    std::vector<Fundamentals> IList;
+    std::vector<Lexeme> IList;
     std::vector<LexemeAttributes*> attributes;
 public:
     DynamicTable() = default;
-    size_t add(std::string& strlex,TokenType token, ExpandedToken type, LexemeAttributes *lexema = nullptr)
+    size_t add(std::string& strlex, ExpandedToken type, LexemeAttributes *lexema = nullptr)
     {
         if (identificators.find(strlex) == identificators.end())
         {
             size_t i = IList.size();
-            IList.emplace_back(strlex,token,type);
+            IList.emplace_back(strlex,type);
             attributes.push_back(lexema);
             identificators[strlex] = i;
             return i;
@@ -189,13 +185,21 @@ public:
     }
     auto find(const std::string& lex)
     {
-        return identificators.find(lex);
+       auto a = identificators.find(lex);
+       if(a == identificators.end())
+       {
+          return size();
+       }
+       else
+       {
+          return a->second;
+       }
     }
     std::string getVal(size_t i)
     {
         return IList[i].lexeme;
     }
-    Fundamentals getRaw(size_t i)
+    Lexeme getRaw(size_t i)
     {
        return IList[i];
     }
@@ -205,7 +209,7 @@ public:
     }
     bool contains(const std::string& lex)
     {
-        return find(lex) == identificators.end() ? false : true;
+        return find(lex) == size() ? false : true;
     }
     size_t size()
     {

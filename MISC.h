@@ -5,6 +5,13 @@
 #include "Error.h"
 void trim(std::string &str)
 {
+	auto it = std::find_if(str.begin(), str.end(),
+		[](unsigned char c)
+		{
+			return !std::isspace(c);
+		});
+
+	str.erase(str.begin(), it);
 	str.erase
 	(
 		std::unique
@@ -16,6 +23,14 @@ void trim(std::string &str)
 				return a == ' ' && b == ' ';
 			}
 		),
+		str.end()
+	);
+	str.erase(
+		std::remove_if(str.begin(), str.end(),
+			[](char c)
+			{
+				return std::isspace(c) && c != ' ';
+			}),
 		str.end()
 	);
 
@@ -68,31 +83,25 @@ bool isIdentifier(const std::string &s)
 	return true;
 }
 
+
+
+
 bool provide(const std::string str, ExpandedToken &out)
 {
 	if (str == "FUNDAMENTALS") { out = ExpandedToken::FUNDAMENTALS; return true; }
 	if (str == "TYPE") { out = ExpandedToken::TYPE;         return true; }
 	if (str == "BINARY") { out = ExpandedToken::BINARY; return true; }
 	if (str == "UNARY") { out = ExpandedToken::UNARY;  return true; }
-	if (str == "COMMA") { out = ExpandedToken::COMMA;         return true; }
-	if (str == "SEMICOLON") { out = ExpandedToken::SEMICOLON;     return true; }
-	if (str == "OPEN_PAREN") { out = ExpandedToken::OPEN_PAREN;    return true; }
-	if (str == "CLOSE_PAREN") { out = ExpandedToken::CLOSE_PAREN;   return true; }
-	if (str == "OPEN_BRACE") { out = ExpandedToken::OPEN_BRACE;    return true; }
-	if (str == "CLOSE_BRACE") { out = ExpandedToken::CLOSE_BRACE;   return true; }
-	if (str == "OPEN_BRACKET") { out = ExpandedToken::OPEN_BRACKET;  return true; }
-	if (str == "CLOSE_BRACKET") { out = ExpandedToken::CLOSE_BRACKET; return true; }
+	if (str == "SEPARATOR") { out = ExpandedToken::SEPARATOR;         return true; }
+
 	return false;
 }
 
-
-
-void divide(std::pair<std::string, ExpandedToken> &par, std::string str)
+void divide(std::pair<std::string, ExpandedToken> &par,const std::string &str)
 {
 	auto space = std::find(str.begin(),str.end(), ' ');
 	par.first = std::string(str.begin(), space);
 	provide(std::string(space+1, str.end()), par.second);
-
 }
 
 

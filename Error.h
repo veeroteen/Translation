@@ -29,11 +29,11 @@ public:
 	{
 		errors.push_back(error);
 	}
-	static void printErrors()
+	static void printErrors(std::ostream &stream)
 	{
 		for(auto &a : errors)
 		{
-			std::cout << a << std::endl;
+			stream << a << std::endl;
 		
 		}
 	}
