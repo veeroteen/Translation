@@ -49,15 +49,3 @@ std::string expandedTokenToString(ExpandedToken t)
 		default:                          return "unknown";
 	}
 }
-
-std::string to_string(const LocalExpectation &expec)
-{
-	std::string res;
-	for (auto it = expec.expected.begin(); it != expec.expected.end(); ++it)
-	{
-		res += expandedTokenToString(*it);
-		if (std::next(it) != expec.expected.end())
-			res += ", ";
-	}
-	return res;
-}

@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <iostream>
 
-enum class  ExpandedToken
+enum class ExpandedToken
 {
    FUNDAMENTALS, // for,if, etc..
    TYPE, // int, void, etc...
@@ -19,7 +19,7 @@ enum class  ExpandedToken
    UNEXPECTED
 };
 
-enum class  TokenType
+enum class TokenType
 {
     //dynamic
     IDENTIFIER,
@@ -34,12 +34,12 @@ enum class  TokenType
     UNEXPECTED
 };
 
-enum class  IdentificatorType
+enum class IdentificatorType
 {
     VARIABLE,
     FUNCTION
 };
-enum class  ValueType
+enum class ValueType
 {
     VOID,
     INT,
@@ -87,7 +87,8 @@ struct LexemeI
 {
    ExpandedToken type;
    size_t i;
-   LexemeI(ExpandedToken type, size_t i) : type(type), i(i) {};
+   size_t str_n;
+   LexemeI(ExpandedToken type, size_t i,size_t str_n) : type(type), i(i), str_n(str_n) {};
 };
 
 class StaticTable

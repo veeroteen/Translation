@@ -1,0 +1,8 @@
+line: 10, Expected identifier or constant.
+line: 10, Expected expression.
+line: 10, Unexpected token: ;
+line: 12, Expected ;
+line: 12, Expected ; or =
+line: 12, Unexpected token: 3
+line: 12, Unexpected token: ;
+line: 16, Expected identifier.

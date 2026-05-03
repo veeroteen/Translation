@@ -4,8 +4,12 @@
 #include <algorithm>
 #include <cctype>
 #include "Error.h"
+
+
+size_t count = 0;
 void trim(std::string &str)
 {
+   count++;
    auto comm = str.find("//");
    if(comm != std::string::npos)
    {

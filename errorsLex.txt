@@ -1,0 +1,27 @@
+line: 16, 1i user-defined literal not found or unappropriate
+line: 18, 1_i user-defined literal not found or unappropriate
+line: 19, i.1 user-defined literal not found or unappropriate
+line: 20, 1.i user-defined literal not found or unappropriate
+line: 26, .PI user-defined literal not found or unappropriate
+line: 28, !PI user-defined literal not found or unappropriate
+line: 29, $PI user-defined literal not found or unappropriate
+line: 32, .Pi user-defined literal not found or unappropriate
+line: 34, !Pi user-defined literal not found or unappropriate
+line: 35, $Pi user-defined literal not found or unappropriate
+line: 38, int.PI user-defined literal not found or unappropriate
+line: 40, !PI user-defined literal not found or unappropriate
+line: 41, $PI user-defined literal not found or unappropriate
+line: 44, int.Pi user-defined literal not found or unappropriate
+line: 46, !Pi user-defined literal not found or unappropriate
+line: 47, $Pi user-defined literal not found or unappropriate
+line: 64,  user-defined literal not found or unappropriate
+line: 68,  user-defined literal not found or unappropriate
+line: 72,  user-defined literal not found or unappropriate
+line: 75,  user-defined literal not found or unappropriate
+line: 81,  user-defined literal not found or unappropriate
+line: 84,  user-defined literal not found or unappropriate
+line: 91,  user-defined literal not found or unappropriate
+line: 95,  user-defined literal not found or unappropriate
+line: 100,  user-defined literal not found or unappropriate
+line: 104,  user-defined literal not found or unappropriate
+line: 161, comment unclosed at end of file

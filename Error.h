@@ -7,17 +7,7 @@
 #include <algorithm>
 #include <iostream>
 
-struct LocalExpectation
-{
-	ExpandedToken expectator;
-	size_t n;
-	std::set<ExpandedToken> expected;
-	template <typename... Args>
-	LocalExpectation(size_t n,ExpandedToken expectator, Args... args) : n(n),expectator(expectator)
-	{
-		(expected.insert(args), ...);
-	}
-};
+
 
 class Error
 {
