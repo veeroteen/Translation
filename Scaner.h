@@ -107,11 +107,7 @@ class Scanner
       makeError(lex->str_n,
          getLexemeStr(*lex) + " already exists in this scope");
    }
-   int addConst(std::string &word, size_t str_n, int value)
-   {
-   
-   
-   }
+
    int addLexeme(std::string &word,size_t str_n)
    {
       size_t i = keywords.find(word);
@@ -159,11 +155,11 @@ class Scanner
    int getPriority(const std::string &op)
    {
       if (op == "*" || op == "/")
-         return 2;
-
+         return 3;
       if (op == "+" || op == "-")
+         return 2;
+      if (op == "<")
          return 1;
-
       if (op == "==" || op == "!=")
          return 0;
 
@@ -215,6 +211,16 @@ class Scanner
          }
          trim(str);
          
+         for(auto &a : str)
+         {
+            if(a < 0)
+            {
+               str = "";
+               makeError(strn, "forbidden symbol in string");
+               break;
+            }
+         }
+
          auto cons = str.find("const");
          if (cons != std::string::npos)
          {
@@ -234,23 +240,30 @@ class Scanner
                      std::string name = str;
                      if(isIdentifier(str))
                      {
-                        buff >> str;
-                        if(str == "=")
+                        if (constants.contains(str))
                         {
-                           buff >> str;
-                           if(isConstant(str))
-                           {
-                              int *value = new int(std::stoi(str));
-                              constants.add(name, ExpandedToken::CONSTANT, new LexemeAttributes(value));
-                           }
-                           else
-                           {
-                              makeError(strn, " expected number");
-                           }
+                           makeError(strn,str + " constant already defined");
                         }
                         else
                         {
-                           makeError(strn, " expected =");
+                           buff >> str;
+                           if (str == "=")
+                           {
+                              buff >> str;
+                              if (isConstant(str))
+                              {
+                                 int *value = new int(std::stoi(str));
+                                 constants.add(name, ExpandedToken::CONSTANT, new LexemeAttributes(value));
+                              }
+                              else
+                              {
+                                 makeError(strn, " expected number");
+                              }
+                           }
+                           else
+                           {
+                              makeError(strn, " expected =");
+                           }
                         }
                      }
                      else
@@ -289,9 +302,9 @@ class Scanner
    void lexScan(std::istream &code)
    {
       size_t strn = 1;
+      
       while (!code.eof())
       {
-
          std::string str = "";
          std::getline(code, str);
          auto start = str.begin();
@@ -300,7 +313,7 @@ class Scanner
             auto separ = findSep(start, str.end(), stringSep);
             std::string word = std::string(start, separ);
             int err = addLexeme(word,strn);
-            if (err != 0 && (separ == str.end() ? true : (*separ == ' ')))
+            if (err != 0 && (separ == str.end() ? true : (*separ == ';')))
             {
                makeError(strn, word + " user-defined literal not found or unappropriate");
                break;
@@ -407,7 +420,7 @@ class Scanner
          start++;
          auto lex = start;
          while (getLexemeStr(*lex) != "}")
-         {
+         {            
             if(lex->type == ExpandedToken::TYPE)
             {
                if (checkStr(lex))
@@ -431,8 +444,16 @@ class Scanner
             }
             else if(lex->type == ExpandedToken::IDENTIFIER)
             {
-               block->body.push_back(AssigmentChain(lex, block));
-
+               std::string id = getLexemeStr(*lex);
+               if (curScope->existInScope(id))
+               {
+                  block->body.push_back(AssigmentChain(lex, block));
+               }
+               else
+               {
+                  makeError(lex->str_n, id + ", identifier not defined");
+                  scipStr(lex);
+               }
             }
             else if(getLexemeStr(*lex) == "if")
             {
@@ -542,7 +563,6 @@ class Scanner
                else
                {
                   makeExpectEr(lex, ";");
-                  scipStr(start);
                }
             }
             else
@@ -554,13 +574,11 @@ class Scanner
          {
             makeError(lex->str_n,
                "Instead of " + getLexemeStr(*lex) + ", expected =");
-            scipStr(start);
          }
       }
       else
       {
          makeUnexEnExEr(lex);
-         scipStr(start);
       }
       scipStr(start);
       return ret;
@@ -655,15 +673,18 @@ class Scanner
    {
       if (start->type == ExpandedToken::IDENTIFIER)
       {
+         auto buff = getLexemeStr(*start);
+         if (!curScope->existInScope(buff))
+         {
+            makeError(start->str_n, buff + ", identifier not defined");
+         }
          auto *node =
             new IdetifierNode(
                EtoT(start->type),
                start->i,
                parent
             );
-
          start++;
-
          return node;
       }
 
@@ -886,11 +907,13 @@ class Scanner
          {
             auto *b =
                static_cast<IfNode *>(node);
-               PrintPostfix(b->block);
-               if(b->elseNode != nullptr)
-               {
-                  PrintPostfix(b->elseNode);
-               }
+            PrintPostfix(b->expression);
+            std::cout << "IF\n    ";
+            PrintPostfix(b->block);
+            if(b->elseNode != nullptr)
+            {
+               PrintPostfix(b->elseNode);
+            }
             return;
          }
          case NodeType::Programm:
@@ -982,6 +1005,4 @@ public:
       out.close();
 
 	}
-
-
 };

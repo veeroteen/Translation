@@ -1,5 +1,4 @@
 // ctrl k, ctrl c, ctrl u
-
 // данные типа int; 
 // инструкции описания переменных;
 // операторы присваивания, if, if- else  любой вложенности и в любой последовательности;
@@ -8,6 +7,7 @@
 // Неполное ;
 void main()
 {
+    print (a1);
     int z1 = 1;
     int z1 = 2
     int z3 3;
@@ -70,39 +70,51 @@ void main()
 
     // if else
     int a1 = 1;
-    if (a1 < 5) {
+
+    if (a1 < 5) 
+    {
         a1 = a1 + 1; // a1 = 2
-        print (a1);
-    } else {
+    } 
+    else 
+    {
         a1 = a1 + 2;
     }
 
     // плохой if else
     a1 = 5;
-    if (a1 < 5) {
+    if (a1 < 5) 
+    {
         a1 = a1 + 1; // a1 = 2
         print (a1);
-    } else {
+    } 
+    else 
+    {
         a1 = 2 // a1 = 2
     }
 
     // if-else  любой вложенности и в любой последовательности;
     int el1 = 1;
     int el2 = 1;
-    if (el1 == 1) {
+    if (el1 == 1) 
+    {
         if (el2 < 1)
         {
             el2 = 3;
-        } else {
+        } 
+        else 
+        {
             el2 = 2; // el = 2
         }
     }
 
-    if (el1 == 1) {
+    if (el1 == 1) 
+    {
         if (el2 < 2)
         {
             el2 = 3 // el = 2
-        } else {
+        } 
+        else 
+        {
             el2 = 2; 
         }
     } 
