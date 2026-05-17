@@ -1,0 +1,21 @@
+line: 12, z1 already exists in this scope
+line: 13, Instead of 3, expected =
+line: 19, Unexpected end of expression
+line: 20, Unexpected end of expression
+line: 21, Unexpected end of expression
+line: 22, Instead of ,, expected =
+line: 26, PI already exists in this scope
+line: 28, _PI already exists in this scope
+line: 29, Unexpected end of expression
+line: 30, Unexpected end of expression
+line: 32, Pi already exists in this scope
+line: 34, _Pi already exists in this scope
+line: 35, Unexpected end of expression
+line: 36, Unexpected end of expression
+line: 56, Instead of main, expected identifier
+line: 57, Instead of if, expected identifier
+line: 58, Instead of int, expected identifier
+line: 62, u1 already exists in this scope
+line: 73, Instead of <, expected )
+line: 73, <, was unexpected
+line: 75, Instead of (, expected =

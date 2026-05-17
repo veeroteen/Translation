@@ -9,7 +9,8 @@
 #include <stack>
 #include "AST.h"
 #include <sstream>
-
+#include <string>
+#include <iostream>
 
 class Scanner
 {
@@ -106,6 +107,11 @@ class Scanner
       makeError(lex->str_n,
          getLexemeStr(*lex) + " already exists in this scope");
    }
+   int addConst(std::string &word, size_t str_n, int value)
+   {
+   
+   
+   }
    int addLexeme(std::string &word,size_t str_n)
    {
       size_t i = keywords.find(word);
@@ -166,43 +172,32 @@ class Scanner
    void precompile(std::string &codepath,std::stringstream &stream)
    {
       std::ifstream code(codepath);
-      while (!code.eof())
-      {
-         std::string str = "";
-         std::getline(code, str);
-         bool comstate = false;
-
-      }
-   
-   
-   
-   
-   }
-   void lexScan(std::istream &code)
-   {
-      size_t strn = 1;
       bool comstate = false;
+      size_t strn = 1;
       while (!code.eof())
       {
          /**/
          std::string str = "";
          std::getline(code, str);
-         if(comstate)
+         
+         if (comstate)
          {
-            
+
             auto commend = str.find("*/");
             if (commend != std::string::npos)
             {
-               str.erase(str.begin(), str.begin()+commend+2);
+               str.erase(str.begin(), str.begin() + commend + 2);
                comstate = false;
             }
             else
             {
                str.erase(str.begin(), str.end());
-            
+               stream << std::endl;
+               strn++;
+               continue;
             }
          }
-         
+
          auto comm = str.find("/*");
          if (comm != std::string::npos)
          {
@@ -219,10 +214,87 @@ class Scanner
             }
          }
          trim(str);
+         
+         auto cons = str.find("const");
+         if (cons != std::string::npos)
+         {
+            auto sep = str.find(";");
+            if (sep != std::string::npos)
+            {
+               str.erase(sep,1);
+               std::stringstream buff(str);
+               std::string strBuff = "";
+               buff >> strBuff;
+               if (strBuff == "const")
+               {
+                  buff >> str;
+                  if (str == "int")
+                  {
+                     buff >> str;
+                     std::string name = str;
+                     if(isIdentifier(str))
+                     {
+                        buff >> str;
+                        if(str == "=")
+                        {
+                           buff >> str;
+                           if(isConstant(str))
+                           {
+                              int *value = new int(std::stoi(str));
+                              constants.add(name, ExpandedToken::CONSTANT, new LexemeAttributes(value));
+                           }
+                           else
+                           {
+                              makeError(strn, " expected number");
+                           }
+                        }
+                        else
+                        {
+                           makeError(strn, " expected =");
+                        }
+                     }
+                     else
+                     {
+                        makeError(strn, str + " user-defined literal not found or unappropriate");
+                     }
+                  }
+                  else
+                  {
+                     makeError(strn, "unexpected const definition");
+                  }
+               }
+               else
+               {
+                  makeError(strn, " unexpected const definition");
+               }
+            }
+            else
+            {
+               makeError(strn, " lost ;");
+            }
+            str = "";
+         }
+
+         stream << str << std::endl;
+         strn++;
+      }
+      if (comstate == true)
+      {
+         makeError(strn, "comment unclosed at end of file");
+      }
+   
+   
+   
+   }
+   void lexScan(std::istream &code)
+   {
+      size_t strn = 1;
+      while (!code.eof())
+      {
+
+         std::string str = "";
+         std::getline(code, str);
          auto start = str.begin();
-
-
-
          while (start != str.end())
          {
             auto separ = findSep(start, str.end(), stringSep);
@@ -250,10 +322,6 @@ class Scanner
             start = separ+1;
          }
          strn += 1;
-      }
-      if(comstate == true)
-      {
-         makeError(strn,"comment unclosed at end of file");
       }
    
    }
@@ -352,11 +420,13 @@ class Scanner
                   else
                   {
                      makeExpectEr(lex, "identifier");
+                     scipStr(lex);
                   }
                }
                else
                {
                   makeUnexEnExEr(lex);
+                  scipStr(lex);
                }
             }
             else if(lex->type == ExpandedToken::IDENTIFIER)
@@ -381,12 +451,14 @@ class Scanner
                else
                {
                   makeUnexEnExEr(lex);
+                  scipStr(lex);
                }
             }
             else
             {
                makeError(lex->str_n,
                   getLexemeStr(*lex) + ", was unexpected");
+               scipStr(lex);
             }
 
             start = lex;
@@ -407,7 +479,7 @@ class Scanner
    {
       DeclarationNode *ret = new DeclarationNode(EtoT(start->type), start->i, parent);
       auto lexStr = getLexemeStr(*start);
-      if (!(curScope->existInScope(lexStr)))
+      if (!(curScope->existInScope(lexStr)) && !(constants.contains(lexStr)))
       {
          curScope->vars[lexStr] = true;
 
@@ -421,7 +493,6 @@ class Scanner
                if (getLexemeStr(*lex) == ";")
                {
                   lex++;
-
                }
                else
                {
