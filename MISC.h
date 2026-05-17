@@ -15,6 +15,11 @@ void trim(std::string &str)
    {
       str.erase(comm+str.begin(), str.end());
    }
+   if(str.empty())
+   {
+      return;
+   }
+
    auto it = std::find_if(str.begin(), str.end(),
       [](unsigned char c)
       {
@@ -37,13 +42,22 @@ void trim(std::string &str)
    );
 
    str.erase(
-      std::remove_if(str.begin(), str.end(),
+      std::remove_if(
+         str.begin(),
+         str.end(),
          [](char c)
          {
-            return std::isspace(c) && c != ' ';
+            return std::isspace(
+               static_cast<unsigned char>(c)
+            ) && c != ' ';
          }),
       str.end()
    );
+   if (str.empty())
+   {
+      return;
+   }
+
    auto rit = std::find_if(str.rbegin(), str.rend(),
       [](unsigned char c)
       {
@@ -68,7 +82,7 @@ auto findSep(const std::string::iterator begin,const std::string::iterator end,c
    }
 }
 
-bool isInteger(const std::string &s)
+bool isConstant(const std::string &s)
 {
    if (s.empty()) return false;
 
@@ -115,3 +129,5 @@ void divide(std::pair<std::string, ExpandedToken> &par,const std::string &str)
    par.first = std::string(str.begin(), space);
    provide(std::string(space+1, str.end()), par.second);
 }
+
+

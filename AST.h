@@ -8,7 +8,7 @@ enum class NodeType
 	Function,
 	Block,
 
-	Declaraation,
+	Declaration,
 	Assign,
 
 	If,
@@ -70,7 +70,7 @@ public:
 	TokenType table;
 	size_t id;
 	BaseNode *init = nullptr;
-	DeclarationNode(TokenType table, size_t id, BaseNode *parent) : table(table), id(id), BaseNode(NodeType::Declaraation, parent) {};
+	DeclarationNode(TokenType table, size_t id, BaseNode *parent) : table(table), id(id), BaseNode(NodeType::Declaration, parent) {};
 	void addInit(BaseNode* node)
 	{
 		init = node;
@@ -80,8 +80,9 @@ class AssignNode : public BaseNode
 {
 public:
 	AssignNode(BaseNode *parent) : BaseNode(NodeType::Assign, parent) {};
-	BaseNode *lhs = nullptr, *rhs = nullptr;
-	void setLhs(BaseNode* node)
+	IdetifierNode *lhs = nullptr;
+	BaseNode *rhs = nullptr;
+	void setLhs(IdetifierNode* node)
 	{
 		lhs = node;
 	}
@@ -131,5 +132,31 @@ enum class Levels
 	SEP,
 	IFSEQ,
 	ELSE
+};
+
+class Scope
+{
+public:
+
+	Scope *parent = nullptr;
+
+	std::unordered_map<std::string, bool> vars;
+
+	Scope() = default;
+	Scope(Scope *parent) : parent(parent) {};
+	bool existInScope(const std::string &lex)
+	{
+		auto scope = this;
+		do
+		{
+			if(scope->vars.contains(lex))
+			{
+				return true;
+			}
+			scope = scope->parent;
+		} while (scope != nullptr);
+		return false;
+	}
+
 };
 

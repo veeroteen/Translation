@@ -8,7 +8,7 @@
 #include "Helpers.h"
 #include <stack>
 #include "AST.h"
-
+#include <sstream>
 
 
 class Scanner
@@ -18,6 +18,7 @@ class Scanner
    StaticTable separators;
    DynamicTable constants;
    DynamicTable identificators;
+   Scope *global, *curScope;
    std::vector<LexemeI> lexemes;
    std::set<char> stringSep;
    std::string getLexemeStr(LexemeI &lex)
@@ -84,432 +85,26 @@ class Scanner
          }
       }
    }
-   bool MainChain(std::vector<LexemeI>::iterator &start)
-   {
-      if (start->type != ExpandedToken::TYPE)
-      {
-         makeError(start->str_n,
-            "Instead of " + getLexemeStr(*start) + ", expected type.");
 
-         return false;
-      }
-
-      start++;
-
-      if (getLexemeStr(*start) != "main")
-      {
-         makeError(start->str_n,
-            "Instead of " + getLexemeStr(*start) + ", expected main.");
-
-         return false;
-      }
-
-      start++;
-
-      if (getLexemeStr(*start) != "(")
-      {
-         makeError(start->str_n,
-            "Instead of " + getLexemeStr(*start) + ", expected (.");
-
-         return false;
-      }
-
-      start++;
-
-      if (getLexemeStr(*start) != ")")
-      {
-         makeError(start->str_n,
-            "Instead of " + getLexemeStr(*start) + ", expected ).");
-
-         return false;
-      }
-
-      start++;
-
-      return true;
-   }
-
-   BaseNode *PrimaryChain(
-      std::vector<LexemeI>::iterator &start,
-      BaseNode *parent)
-   {
-      if (start->type == ExpandedToken::IDENTIFIER)
-      {
-         BaseNode *node =
-            new IdetifierNode(
-               EtoT(start->type),
-               start->i,
-               parent
-            );
-
-         start++;
-
-         return node;
-      }
-
-      if (start->type == ExpandedToken::CONSTANT)
-      {
-         BaseNode *node =
-            new ConstNode(
-               EtoT(start->type),
-               start->i,
-               parent
-            );
-
-         start++;
-
-         return node;
-      }
-
-      makeError(
-         start->str_n,
-         "Expected identifier or constant."
-      );
-
-      return nullptr;
-   }
-
-   BaseNode *ExpressionChain(
-      std::vector<LexemeI>::iterator &start,
-      BaseNode *parent)
-   {
-      BaseNode *left = PrimaryChain(start, parent);
-
-      if (left == nullptr)
-      {
-         return nullptr;
-      }
-
-      while (start->type == ExpandedToken::BINARY)
-      {
-         OperationNode *op =
-            new OperationNode(
-               EtoT(start->type),
-               start->i,
-               parent
-            );
-
-         start++;
-
-         BaseNode *right =
-            PrimaryChain(start, op);
-
-         if (right == nullptr)
-         {
-            delete op;
-            return left;
-         }
-
-         op->setOperands(left, right);
-
-         left = op;
-      }
-
-      return left;
-   }
-
-   void DeclarationChain(
-      DeclarationNode *node,
-      std::vector<LexemeI>::iterator &start)
-   {
-      if (getLexemeStr(*start) == ";")
-      {
-         start++;
-         return;
-      }
-
-      if (getLexemeStr(*start) == "=")
-      {
-         start++;
-
-         BaseNode *expr =
-            ExpressionChain(start, node);
-
-         if (expr == nullptr)
-         {
-            makeError(
-               start->str_n,
-               "Expected expression."
-            );
-
-            return;
-         }
-
-         node->addInit(expr);
-
-         if (getLexemeStr(*start) != ";")
-         {
-            makeError(
-               start->str_n,
-               "Expected ;"
-            );
-
-            return;
-         }
-
-         start++;
-
-         return;
-      }
-
-      makeError(
-         start->str_n,
-         "Expected ; or ="
-      );
-   }
-
-   void AssignChain(
-      AssignNode *node,
-      std::vector<LexemeI>::iterator &start)
-   {
-      if (start->type != ExpandedToken::IDENTIFIER)
-      {
-         makeError(
-            start->str_n,
-            "Expected identifier."
-         );
-
-         return;
-      }
-
-      node->setLhs(
-         new IdetifierNode(
-            EtoT(start->type),
-            start->i,
-            node
-         )
-      );
-
-      start++;
-
-      if (getLexemeStr(*start) != "=")
-      {
-         makeError(
-            start->str_n,
-            "Expected ="
-         );
-
-         return;
-      }
-
-      start++;
-
-      BaseNode *expr =
-         ExpressionChain(start, node);
-
-      if (expr == nullptr)
-      {
-         makeError(
-            start->str_n,
-            "Expected expression."
-         );
-
-         return;
-      }
-
-      node->setRhs(expr);
-
-      if (getLexemeStr(*start) != ";")
-      {
-         makeError(
-            start->str_n,
-            "Expected ;"
-         );
-
-         return;
-      }
-
-      start++;
-   }
-
-
-   void IfChain(
-      IfNode *node,
-      std::vector<LexemeI>::iterator &start)
-   {
-      if (getLexemeStr(*start) != "if")
-      {
-         makeError(
-            start->str_n,
-            "Expected if."
-         );
-
-         return;
-      }
-
-      start++;
-
-      if (getLexemeStr(*start) != "(")
-      {
-         makeError(
-            start->str_n,
-            "Expected (."
-         );
-
-         return;
-      }
-
-      start++;
-
-      BaseNode *expr =
-         ExpressionChain(start, node);
-
-      if (expr == nullptr)
-      {
-         makeError(
-            start->str_n,
-            "Expected expression."
-         );
-
-         return;
-      }
-
-      node->expression = expr;
-
-      if (getLexemeStr(*start) != ")")
-      {
-         makeError(
-            start->str_n,
-            "Expected )."
-         );
-
-         return;
-      }
-
-      start++;
-
-      node->block =
-         BlockChain(start, node);
-
-      if (getLexemeStr(*start) == "else")
-      {
-         start++;
-
-         if (getLexemeStr(*start) == "if")
-         {
-            IfNode *elseIf =
-               new IfNode(node);
-
-            IfChain(elseIf, start);
-
-            node->elseNode = elseIf;
-         }
-         else
-         {
-            node->elseNode =
-               BlockChain(start, node);
-         }
-      }
-   }
-
-   BlockNode *BlockChain(
-      std::vector<LexemeI>::iterator &start,
-      BaseNode *parent)
-   {
-      if (getLexemeStr(*start) != "{")
-      {
-         makeError(
-            start->str_n,
-            "Instead of " + getLexemeStr(*start) + ", expected {."
-         );
-
-         return nullptr;
-      }
-
-      BlockNode *block =
-         new BlockNode(parent);
-
-      start++;
-
-      while (getLexemeStr(*start) != "}")
-      {
-         if (start->type == ExpandedToken::TYPE)
-         {
-            start++;
-
-            if (start->type != ExpandedToken::IDENTIFIER)
-            {
-               makeError(
-                  start->str_n,
-                  "Expected identifier."
-               );
-
-               return block;
-            }
-
-            DeclarationNode *decl =
-               new DeclarationNode(
-                  EtoT(start->type),
-                  start->i,
-                  block
-               );
-
-            block->addNode(decl);
-
-            start++;
-
-            DeclarationChain(decl, start);
-         }
-         else if (start->type == ExpandedToken::IDENTIFIER)
-         {
-            AssignNode *assign =
-               new AssignNode(block);
-
-            block->addNode(assign);
-
-            AssignChain(assign, start);
-         }
-         else if (getLexemeStr(*start) == "if")
-         {
-            IfNode *ifnode =
-               new IfNode(block);
-
-            block->addNode(ifnode);
-
-            IfChain(ifnode, start);
-         }
-         else if (getLexemeStr(*start) == "return")
-         {
-            start++;
-
-            ReturnNode *retnode =
-               new ReturnNode(block);
-
-            block->addNode(retnode);
-
-            if (getLexemeStr(*start) != ";")
-            {
-               retnode->retVal =
-                  ExpressionChain(start, retnode);
-            }
-
-            if (getLexemeStr(*start) != ";")
-            {
-               makeError(start->str_n, "Expected ; after return");
-               return nullptr;
-            }
-
-            start++;
-         }
-         else
-         {
-            makeError(
-               start->str_n,
-               "Unexpected token: " + getLexemeStr(*start)
-            );
-
-            start++;
-         }
-      }
-
-      start++;
-
-      return block;
-   }
    void makeError(size_t strn, std::string str)
    {
       std::string error = "line: " + std::to_string(strn) + ", " + str;
       Error::errors.push_back(error);
+   }
+   void makeExpectEr(std::vector<LexemeI>::iterator &lex, std::string expectator)
+   {
+      makeError(lex->str_n,
+         "Instead of " + getLexemeStr(*lex) + ", expected " + expectator);
+   }
+   void makeUnexEnExEr(std::vector<LexemeI>::iterator &lex)
+   {
+      makeError(lex->str_n,
+         "Unexpected end of expression");
+   }
+   void makeAlExEr(std::vector<LexemeI>::iterator &lex)
+   {
+      makeError(lex->str_n,
+         getLexemeStr(*lex) + " already exists in this scope");
    }
    int addLexeme(std::string &word,size_t str_n)
    {
@@ -542,7 +137,7 @@ class Scanner
          lexemes.emplace_back(identificators.getRaw(i).type,i, str_n);
          return 0;
       }
-      if (isInteger(word))
+      if (isConstant(word))
       {
          size_t i = constants.find(word);
          if (i == constants.size())
@@ -555,9 +150,36 @@ class Scanner
       return 1;
 
    }
-   void lexScan(std::string &codePath)
+   int getPriority(const std::string &op)
    {
-      std::ifstream code(codePath);
+      if (op == "*" || op == "/")
+         return 2;
+
+      if (op == "+" || op == "-")
+         return 1;
+
+      if (op == "==" || op == "!=")
+         return 0;
+
+      return -1;
+   }
+   void precompile(std::string &codepath,std::stringstream &stream)
+   {
+      std::ifstream code(codepath);
+      while (!code.eof())
+      {
+         std::string str = "";
+         std::getline(code, str);
+         bool comstate = false;
+
+      }
+   
+   
+   
+   
+   }
+   void lexScan(std::istream &code)
+   {
       size_t strn = 1;
       bool comstate = false;
       while (!code.eof())
@@ -609,6 +231,7 @@ class Scanner
             if (err != 0 && (separ == str.end() ? true : (*separ == ' ')))
             {
                makeError(strn, word + " user-defined literal not found or unappropriate");
+               break;
             }
             if(separ == str.end())
             {
@@ -621,7 +244,7 @@ class Scanner
                if (err != 0)
                {
                   makeError(strn, word + "  user-defined literal not found or unappropriate");
-
+                  break;
                }
             }
             start = separ+1;
@@ -634,6 +257,442 @@ class Scanner
       }
    
    }
+   void scipStr(std::vector<LexemeI>::iterator &start)
+   {
+      auto buff = start;
+      while (start->str_n == buff->str_n)
+      {
+         
+         buff++;
+         if (buff == lexemes.end())
+         {
+            break;
+         }
+      }
+      start = buff;
+   }
+
+   bool checkStr(std::vector<LexemeI>::iterator &lex)
+   {
+      if ((lex + 1) != lexemes.end())
+      {
+         if (lex->str_n != (lex + 1)->str_n)
+         {
+            return false;
+         }
+         return true;
+      }
+      return false;
+   }
+
+   bool MainChain(std::vector<LexemeI>::iterator &start)
+   {
+      
+      if (start->type != ExpandedToken::TYPE)
+      {
+         makeError(start->str_n,
+            "Instead of " + getLexemeStr(*start) + ", expected type.");
+
+         return false;
+      }
+
+      start++;
+
+      if (getLexemeStr(*start) != "main")
+      {
+         makeError(start->str_n,
+            "Instead of " + getLexemeStr(*start) + ", expected main.");
+
+         return false;
+      }
+
+      start++;
+
+      if (getLexemeStr(*start) != "(")
+      {
+         makeError(start->str_n,
+            "Instead of " + getLexemeStr(*start) + ", expected (.");
+
+         return false;
+      }
+
+      start++;
+
+      if (getLexemeStr(*start) != ")")
+      {
+         makeError(start->str_n,
+            "Instead of " + getLexemeStr(*start) + ", expected ).");
+
+         return false;
+      }
+
+      start++;
+      global = new Scope();
+      curScope = global;
+      return true;
+   }
+   BlockNode* BlockChain(std::vector<LexemeI>::iterator &start, BaseNode* parent)
+   {
+      BlockNode*  block= new BlockNode(parent);
+      if (getLexemeStr(*start) == "{")
+      {
+         start++;
+         auto lex = start;
+         while (getLexemeStr(*lex) != "}")
+         {
+            if(lex->type == ExpandedToken::TYPE)
+            {
+               if (checkStr(lex))
+               {
+                  lex++;
+                  if (lex->type == ExpandedToken::IDENTIFIER)
+                  {
+                     block->body.push_back(DeclarationChain(lex, block));
+                  }
+                  else
+                  {
+                     makeExpectEr(lex, "identifier");
+                  }
+               }
+               else
+               {
+                  makeUnexEnExEr(lex);
+               }
+            }
+            else if(lex->type == ExpandedToken::IDENTIFIER)
+            {
+               block->body.push_back(AssigmentChain(lex, block));
+
+            }
+            else if(getLexemeStr(*lex) == "if")
+            {
+               block->body.push_back(IfChain(lex, block));
+            }
+            else if (getLexemeStr(*lex) == "return")
+            {
+               auto ret = new ReturnNode(block);
+               if (checkStr(lex))
+               {
+                  lex++;
+                  ret->retVal = ExpressionChain(lex, ret);
+                  block->body.push_back(ret);
+                  lex++;
+               }
+               else
+               {
+                  makeUnexEnExEr(lex);
+               }
+            }
+            else
+            {
+               makeError(lex->str_n,
+                  getLexemeStr(*lex) + ", was unexpected");
+            }
+
+            start = lex;
+         }
+         auto buff = curScope;
+         curScope = curScope->parent;
+         delete buff;
+      }
+      else
+      {
+         makeExpectEr(start, "{");
+         scipStr(start);
+      }
+      return block;
+   
+   }
+   DeclarationNode* DeclarationChain(std::vector<LexemeI>::iterator &start, BaseNode *parent)
+   {
+      DeclarationNode *ret = new DeclarationNode(EtoT(start->type), start->i, parent);
+      auto lexStr = getLexemeStr(*start);
+      if (!(curScope->existInScope(lexStr)))
+      {
+         curScope->vars[lexStr] = true;
+
+         if (checkStr(start))
+         {
+            auto lex = start + 1;
+            if (getLexemeStr(*lex) == "=")
+            {
+               lex++;
+               ret->addInit(ExpressionChain(lex, parent));
+               if (getLexemeStr(*lex) == ";")
+               {
+                  lex++;
+
+               }
+               else
+               {
+                  makeExpectEr(lex, ";");
+                  scipStr(start);
+               }
+            }
+            else
+            {
+               makeError(lex->str_n,
+                  "Instead of " + getLexemeStr(*lex) + ", expected =");
+               scipStr(start);
+            }
+         }
+         else
+         {
+            makeError(start->str_n,
+               "Unexpected end of expression");
+            scipStr(start);
+         }
+      }
+      else
+      {
+         makeAlExEr(start);
+      }
+      scipStr(start);
+      return ret;
+   }
+   AssignNode* AssigmentChain(std::vector<LexemeI>::iterator &start, BaseNode *parent)
+   {
+      auto lex = start;
+      auto ret = new AssignNode(parent);
+      ret->lhs = new IdetifierNode(EtoT(lex->type), lex->i, ret);
+      if (checkStr(lex))
+      {
+         lex++;
+         if (getLexemeStr(*lex) == "=")
+         {
+            if (checkStr(lex))
+            {
+               lex++;
+               ret->rhs = ExpressionChain(lex, ret);
+               if (getLexemeStr(*lex) == ";")
+               {
+                  lex++;
+               }
+               else
+               {
+                  makeExpectEr(lex, ";");
+                  scipStr(start);
+               }
+            }
+            else
+            {
+               makeUnexEnExEr(lex);
+            }
+         }
+         else
+         {
+            makeError(lex->str_n,
+               "Instead of " + getLexemeStr(*lex) + ", expected =");
+            scipStr(start);
+         }
+      }
+      else
+      {
+         makeUnexEnExEr(lex);
+         scipStr(start);
+      }
+      scipStr(start);
+      return ret;
+   }
+   IfNode* IfChain(std::vector<LexemeI>::iterator &start, BaseNode *parent)
+   {
+      auto ret = new IfNode(parent);
+      if(checkStr(start))
+      {
+         auto lex = start + 1;
+         if(getLexemeStr(*lex) == "(")
+         {
+            lex++;
+            ret->expression = ExpressionChain(lex, parent);
+            if(getLexemeStr(*lex) == ")")
+            {
+               lex++;
+               if(getLexemeStr(*lex) == "{")
+               {
+                  curScope = new Scope(curScope);
+                  ret->block = BlockChain(lex, ret);
+                  lex++;
+                  ret->elseNode = ElseChain(lex, ret);
+               }
+               else
+               {
+                  makeExpectEr(lex, "{");
+               }
+            }
+            else
+            {
+               makeExpectEr(lex, ")");
+            }
+         }
+         else
+         {
+            makeExpectEr(lex, "(");
+         }
+         start = lex;
+      }
+      else
+      {
+         makeError(start->str_n,
+            "Unexpected end of expression");
+         scipStr(start);
+      }
+
+      return ret;
+   }
+   IfNode* ElseChain(std::vector<LexemeI>::iterator &start, BaseNode *parent)
+   {
+      if(getLexemeStr(*start) == "else")
+      {
+         IfNode *ret;
+         auto lex = start;
+         lex++;
+         if(getLexemeStr(*lex) == "if")
+         {
+            ret = IfChain(lex, parent);
+         }
+         else
+         {
+            ret = new IfNode(parent);
+            curScope = new Scope(curScope);
+            ret->block = BlockChain(lex, parent);
+            lex++;
+         }
+         start = lex;
+         return ret;
+         
+      }
+      else
+      {
+         return nullptr;
+      }
+      
+   }
+
+   bool isEndExpr(std::vector<LexemeI>::iterator it)
+   {
+      std::string str = getLexemeStr(*it);
+
+      return
+         str == ";" ||
+         str == ")" ||
+         str == "}" ||
+         str == ",";
+   }
+   BaseNode *PrimaryChain(
+      std::vector<LexemeI>::iterator &start,
+      BaseNode *parent)
+   {
+      if (start->type == ExpandedToken::IDENTIFIER)
+      {
+         auto *node =
+            new IdetifierNode(
+               EtoT(start->type),
+               start->i,
+               parent
+            );
+
+         start++;
+
+         return node;
+      }
+
+      if (start->type == ExpandedToken::CONSTANT)
+      {
+         auto *node =
+            new ConstNode(
+               EtoT(start->type),
+               start->i,
+               parent
+            );
+
+         start++;
+
+         return node;
+      }
+
+      if (getLexemeStr(*start) == "(")
+      {
+         start++;
+
+         BaseNode *expr =
+            ExpressionChain(start, parent);
+
+         if (expr == nullptr)
+         {
+            return nullptr;
+         }
+
+         if (getLexemeStr(*start) != ")")
+         {
+            makeError(
+               start->str_n,
+               "Expected )"
+            );
+
+            return nullptr;
+         }
+
+         start++;
+
+         return expr;
+      }
+
+      makeError(
+         start->str_n,
+         "Expected identifier, constant or ("
+      );
+
+      return nullptr;
+   }
+   BaseNode *ExpressionChain(
+      std::vector<LexemeI>::iterator &start,
+      BaseNode *parent,
+      int minPriority = 0)
+   {
+      BaseNode *left =
+         PrimaryChain(start, parent);
+
+      if (left == nullptr)
+         return nullptr;
+
+      while (start->type == ExpandedToken::BINARY)
+      {
+         std::string opStr =
+            getLexemeStr(*start);
+
+         int priority =
+            getPriority(opStr);
+
+         if (priority < minPriority)
+            break;
+
+         auto *op =
+            new OperationNode(
+               EtoT(start->type),
+               start->i,
+               parent
+            );
+
+         start++;
+
+         BaseNode *right =
+            ExpressionChain(
+               start,
+               op,
+               priority + 1
+            );
+
+         op->lhs = left;
+         op->rhs = right;
+
+         left = op;
+      }
+
+      return left;
+   }
+
+
+
    void sinScan()
    {
       ProgrammNode *area =
@@ -655,72 +714,123 @@ class Scanner
    }
    void PrintPostfix(BaseNode *node)
    {
-      if (!node) return;
+      if (!node)
+         return;
 
       switch (node->getType())
       {
          case NodeType::Identifier:
          {
-            auto *leaf = static_cast<IdetifierNode *>(node);
-            std::cout << getLexemeStr(leaf->table, leaf->id) << " ";
+            auto *leaf =
+               static_cast<IdetifierNode *>(node);
+
+            std::cout
+               << getLexemeStr(leaf->table, leaf->id)
+               << " ";
+
             return;
          }
          case NodeType::Const:
          {
-            auto *leaf = static_cast<ConstNode *>(node);
-            std::cout << getLexemeStr(leaf->table, leaf->id) << " ";
+            auto *leaf =
+               static_cast<ConstNode *>(node);
+
+            std::cout
+               << getLexemeStr(leaf->table, leaf->id)
+               << " ";
+
             return;
          }
-
          case NodeType::Operation:
          {
-            auto *op = static_cast<OperationNode *>(node);
+            auto *op =
+               static_cast<OperationNode *>(node);
 
             PrintPostfix(op->lhs);
             PrintPostfix(op->rhs);
 
-            std::cout << getLexemeStr(op->table, op->id) << " ";
+            std::cout
+               << getLexemeStr(op->table, op->id)
+               << " ";
+
             return;
          }
+         case NodeType::Declaration:
+         {
+            auto *d =
+               static_cast<DeclarationNode *>(node);
 
+            std::cout
+               << getLexemeStr(d->table, d->id)
+               << " ";
+
+            if (d->init)
+            {
+               PrintPostfix(d->init);
+            }
+
+            std::cout << "DECL ";
+
+            return;
+         }
          case NodeType::Assign:
          {
-            auto *a = static_cast<AssignNode *>(node);
+            auto *a =
+               static_cast<AssignNode *>(node);
 
             PrintPostfix(a->lhs);
             PrintPostfix(a->rhs);
 
             std::cout << "= ";
+
             return;
          }
-
          case NodeType::Return:
          {
-            auto *r = static_cast<ReturnNode *>(node);
+            auto *r =
+               static_cast<ReturnNode *>(node);
 
             if (r->retVal)
+            {
                PrintPostfix(r->retVal);
+            }
 
-            std::cout << "return ";
+            std::cout << "RETURN ";
+
             return;
          }
-
          case NodeType::Block:
          {
-            auto *b = static_cast<BlockNode *>(node);
+            auto *b =
+               static_cast<BlockNode *>(node);
 
             for (auto *stmt : b->body)
+            {
                PrintPostfix(stmt);
-
+               std::cout << "\n";
+            }
             return;
          }
-
+         case NodeType::If:
+         {
+            auto *b =
+               static_cast<IfNode *>(node);
+               PrintPostfix(b->block);
+               if(b->elseNode != nullptr)
+               {
+                  PrintPostfix(b->elseNode);
+               }
+            return;
+         }
          case NodeType::Programm:
          {
-            auto *p = static_cast<ProgrammNode *>(node);
+            auto *p =
+               static_cast<ProgrammNode *>(node);
 
             for (auto *c : p->childs)
+            {
                PrintPostfix(c);
+            }
 
             return;
          }
@@ -729,7 +839,6 @@ class Scanner
             return;
       }
    }
-
 public:
    Scanner(std::string &testFolder)
 	{
@@ -782,7 +891,9 @@ public:
       stringSep.insert(' ');
       stringSep.insert('\0');
       std::string codePath(testFolder + "main.cpp");
-      lexScan(codePath);
+      std::stringstream codestream;
+      precompile(codePath, codestream);
+      lexScan(codestream);
       std::ofstream out("errorsLex.txt");
       Error::printErrors(out);
       out.close();

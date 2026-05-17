@@ -9,7 +9,7 @@ std::vector<std::string> Error::errors;
 
 void main()
 {
-   std::string test = "test2";
+   std::string test = "test3";
    Scanner scan(test);
    return;
 

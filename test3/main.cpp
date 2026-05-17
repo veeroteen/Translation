@@ -4,15 +4,11 @@ int main()
 	a = a + 20;
 	if(a == 3)
 	{
-		a = 5;
-	}
-	else if(a == 5)
-	{
-		a = 6;
+		int b = 5;
 	}
 	else
 	{
-		a = 8;
+		int b =  8;
 	}
 	return a;
 }
