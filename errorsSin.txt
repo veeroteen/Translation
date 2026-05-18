@@ -1,1 +1,7 @@
-line: 6, b, identifier not defined
+line: 12, Unexpected end of expression
+line: 14, Unexpected end of expression
+line: 15, Unexpected end of expression
+line: 16, Unexpected end of expression
+line: 17, Instead of ,, expected =
+line: 63, Instead of }, expected ;
+line: 88, ch, identifier not defined

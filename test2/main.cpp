@@ -7,11 +7,6 @@
 // Неполное ;
 void main()
 {
-    print (a1);
-    int z1 = 1;
-    int z1 = 2
-    int z3 3;
-
     // Имена идентификаторов состоят из символов алфавита
     // int
     int 1i = 1;
@@ -21,52 +16,6 @@ void main()
     int 1.i = 1;
     int i,1 = 1;
     int 1,i = 1;
-
-    // Проверка констант
-    int PI = 3;
-    int.PI = 3;
-    int _PI = 3;
-    int !PI = 3;
-    int $PI = 3;
-
-    int Pi = 3;
-    int.Pi = 3;
-    int _Pi = 3;
-    int !Pi = 3;
-    int $Pi = 3;
-
-    const int PI = 3;
-    const int .PI = 3;
-    const int _PI = 3;
-    const int !PI = 3;
-    const int $PI = 3;
-
-    const int Pi = 3;
-    const int .Pi = 3;
-    const int _Pi = 3;
-    const int !Pi = 3;
-    const int $Pi = 3;
-
-    int MAX_VALUE = 10;
-    MAX_VALUE = 30;
-
-    int Max_VALUE = 10;
-                                                        
-    // Идентификатор или константа не должны быть зарезервированным словом.                                                     
-    int main = 1;
-    int if = 1;
-    int int = 2;
-
-    // Повторное объявление переменной.
-    int u1 = 1;
-    int u1 = 3;
-
-    // Предложение и неполное
-    int q1 = 1; int
-    q2 = 3;
-
-    // Два полных предложения
-    int q3 = 1; int q4 = 3;
 
     // if else
     int a1 = 1;
@@ -85,11 +34,10 @@ void main()
     if (a1 < 5) 
     {
         a1 = a1 + 1; // a1 = 2
-        print (a1);
     } 
     else 
     {
-        a1 = 2 // a1 = 2
+        a1 = 2; // a1 = 2
     }
 
     // if-else  любой вложенности и в любой последовательности;
@@ -120,9 +68,9 @@ void main()
     } 
 
     // Проверки на соответствие заявленного типа и значения переменной этого типа.
-    int s1 = 'c';
-    int s2 = 1.1;
-    int s3 = 'char';
+    //int s1 = 'c';
+    //int s2 = 1.1;
+    //int s3 = 'char';
 
     // Математические операции
     int num_i1 = 1;
@@ -135,25 +83,21 @@ void main()
     if (num_i1 == num_i2) // 1 1
     {
         num_i1 = 2;
-        print(num_i1);
     }
 
     if (num_i1 == ch) // ошибка
     {
         num_i2 = 2;
-        print(num_i2);
     }
 
     if (num_i1 != num_i2) // 1 2
     {
         num_i2 = 3;
-        print(num_i2);
     }
 
     if (num_i1 < num_i2) // 1 3
     {
         num_i1 = 3;
-        print(num_i2);
     }
 }
 // Комментарий

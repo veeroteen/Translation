@@ -1,0 +1,6 @@
+line: 111, forbidden symbol in string
+line: 115, comment unclosed at end of file
+line: 12, 1i user-defined literal not found or unappropriate
+line: 14, 1_i user-defined literal not found or unappropriate
+line: 15, i.1 user-defined literal not found or unappropriate
+line: 16, 1.i user-defined literal not found or unappropriate

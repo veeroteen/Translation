@@ -299,44 +299,54 @@ class Scanner
    
    
    }
-   void lexScan(std::istream &code)
+   void lexScan(std::istream& code)
    {
-      size_t strn = 1;
-      
-      while (!code.eof())
-      {
-         std::string str = "";
-         std::getline(code, str);
-         auto start = str.begin();
-         while (start != str.end())
-         {
-            auto separ = findSep(start, str.end(), stringSep);
-            std::string word = std::string(start, separ);
-            int err = addLexeme(word,strn);
-            if (err != 0 && (separ == str.end() ? true : (*separ == ';')))
-            {
-               makeError(strn, word + " user-defined literal not found or unappropriate");
-               break;
-            }
-            if(separ == str.end())
-            {
-               break;
-            }
-            if(*separ != ' ')
-            {
-               word = std::string(separ, separ+1);
-               err = addLexeme(word, strn);
-               if (err != 0)
+       size_t strn = 1;
+       std::string str;
+
+       while (std::getline(code, str))
+       {
+           auto start = str.begin();
+           while (start != str.end())
+           {
+               if (*start == ' ')
                {
-                  makeError(strn, word + "  user-defined literal not found or unappropriate");
-                  break;
+                   ++start;
+                   continue;
                }
-            }
-            start = separ+1;
-         }
-         strn += 1;
-      }
-   
+
+               auto separ = findSep(start, str.end(), stringSep);
+
+               if (start != separ)
+               {
+                   std::string word(start, separ);
+                   int err = addLexeme(word, strn);
+                   if (err != 0)
+                   {
+                       makeError(strn, word + " user-defined literal not found or unappropriate");
+                       break;
+                   }
+               }
+
+               if (separ == str.end())
+               {
+                   break;
+               }
+               if (*separ != ' ')
+               {
+                   std::string sepWord(1, *separ);
+                   int err = addLexeme(sepWord, strn);
+                   if (err != 0)
+                   {
+                       makeError(strn, sepWord + " user-defined literal not found or unappropriate");
+                       break;
+                   }
+               }
+
+               start = separ + 1;
+           }
+           strn += 1;
+       }
    }
    void scipStr(std::vector<LexemeI>::iterator &start)
    {
